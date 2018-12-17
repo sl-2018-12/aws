@@ -4,4 +4,4 @@ Hello **world**
 
 ## Goodbye
 
-Goodbye world
+Goodbye **world**
