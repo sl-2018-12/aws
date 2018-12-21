@@ -9,11 +9,22 @@ SUBNET_ID=subnet-0d00d8b5d01e66e35
 SHUTDOWN_TYPE=stop
 TAGS="ResourceType=instance,Tags=[{Key=installation_id,Value=${USER_NAME}-1},{Key=Name,Value=NAME}]"
 
+initial_command()
+{
+  cat <<EOF
+#!/bin/sh
+
+curl https://raw.githubusercontent.com/sl-2018-12/aws/master/scripts/install-qrencode.sh | bash -s
+EOF
+
+}
+
 start_vm()
 {
   local private_ip_address="$1"
   local public_ip="$2"
   local name="$3"
+  local user_data="$4"
 
   local tags=$(echo $TAGS | sed s/NAME/$name/)
   # local tags=${TAGS/NAME/$name}
@@ -26,13 +37,13 @@ start_vm()
     --instance-initiated-shutdown-behavior "$SHUTDOWN_TYPE" \
     --private-ip-address "$private_ip_address" \
     --tag-specifications "$tags" \
+    --user-data "$user_data" \
     --${public_ip}
 
   # --security-groups "$security_group" \
 
   #  [--block-device-mappings <value>]
   #  [--placement <value>]
-  #  [--user-data <value>]
 }
 
 get_dns_name()
@@ -46,7 +57,7 @@ get_dns_name()
 start()
 {
   start_log=$(
-    start_vm 10.2.1.101 associate-public-ip-address ${USER_NAME}-vm1
+    start_vm 10.2.1.101 associate-public-ip-address ${USER_NAME}-vm1 file://<( initial_command )
   )
 
   instance_id=$(echo "${start_log}" | jq -r .Instances[0].InstanceId)
